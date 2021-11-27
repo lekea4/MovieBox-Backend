@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace MovieBox.Domain.Filters
 {
-    public class MyExceptionFilterAttribute : ExceptionFilterAttribute
+    public class MyExceptionFilter : ExceptionFilterAttribute
     {
-        private readonly ILogger<MyExceptionFilterAttribute> logger;
+        private readonly ILogger<MyExceptionFilter> logger;
 
-        public MyExceptionFilterAttribute(ILogger<MyExceptionFilterAttribute> logger)
+        public MyExceptionFilter(ILogger<MyExceptionFilter> logger)
         {
             this.logger = logger;
         }

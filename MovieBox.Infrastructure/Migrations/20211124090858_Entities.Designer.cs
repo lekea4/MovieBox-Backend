@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MovieBox.Infrastructure.DBContext;
 using NetTopologySuite.Geometries;
@@ -10,9 +11,10 @@ using NetTopologySuite.Geometries;
 namespace MovieBox.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211124090858_Entities")]
+    partial class Entities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -70,7 +72,7 @@ namespace MovieBox.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<bool>("InCinemas")
+                    b.Property<bool>("InTheaters")
                         .HasColumnType("bit");
 
                     b.Property<string>("Poster")
@@ -134,22 +136,22 @@ namespace MovieBox.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MovieCinemas");
+                    b.ToTable("MovieTheaters");
                 });
 
             modelBuilder.Entity("MovieBox.Domain.Entities.MovieCinemaMovies", b =>
                 {
-                    b.Property<int>("MovieCinemaId")
+                    b.Property<int>("MovieTheaterId")
                         .HasColumnType("int");
 
                     b.Property<int>("MovieId")
                         .HasColumnType("int");
 
-                    b.HasKey("MovieCinemaId", "MovieId");
+                    b.HasKey("MovieTheaterId", "MovieId");
 
                     b.HasIndex("MovieId");
 
-                    b.ToTable("MovieCinemasMovies");
+                    b.ToTable("MovieTheatersMovies");
                 });
 
             modelBuilder.Entity("MovieBox.Domain.Entities.MoviesGenres", b =>
@@ -188,21 +190,21 @@ namespace MovieBox.Infrastructure.Migrations
 
             modelBuilder.Entity("MovieBox.Domain.Entities.MovieCinemaMovies", b =>
                 {
-                    b.HasOne("MovieBox.Domain.Entities.MovieCinema", "MovieCinema")
-                        .WithMany()
-                        .HasForeignKey("MovieCinemaId")
+                    b.HasOne("MovieBox.Domain.Entities.Movie", "Movie")
+                        .WithMany("MovieTheatersMovies")
+                        .HasForeignKey("MovieId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MovieBox.Domain.Entities.Movie", "Movie")
-                        .WithMany("MovieCinemasMovies")
-                        .HasForeignKey("MovieId")
+                    b.HasOne("MovieBox.Domain.Entities.MovieCinema", "MovieTheater")
+                        .WithMany()
+                        .HasForeignKey("MovieTheaterId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Movie");
 
-                    b.Navigation("MovieCinema");
+                    b.Navigation("MovieTheater");
                 });
 
             modelBuilder.Entity("MovieBox.Domain.Entities.MoviesGenres", b =>
@@ -226,11 +228,11 @@ namespace MovieBox.Infrastructure.Migrations
 
             modelBuilder.Entity("MovieBox.Domain.Entities.Movie", b =>
                 {
-                    b.Navigation("MovieCinemasMovies");
-
                     b.Navigation("MoviesActors");
 
                     b.Navigation("MoviesGenres");
+
+                    b.Navigation("MovieTheatersMovies");
                 });
 #pragma warning restore 612, 618
         }

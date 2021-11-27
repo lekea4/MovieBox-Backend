@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -10,7 +11,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using MovieBox.API.APIBehavior;
+using MovieBox.Domain.Filters;
+using MovieBox.Domain.Helpers;
 using MovieBox.Infrastructure.DBContext;
+using NetTopologySuite;
+using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,26 +39,41 @@ namespace MovieBox.API
 
             services.AddControllers(options =>
             {
-                options.Filters.Add(typeof(IExceptionFilter));
-            });
+                options.Filters.Add(typeof(MyExceptionFilter));
+                options.Filters.Add(typeof(ParseBadRequest));
+            }).ConfigureApiBehaviorOptions(BadRequestsBehavior.Parse);
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "MovieBox.API", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "MovieBox", Version = "v1" });
             });
 
             services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(Configuration.GetConnectionString("ConnStr")));
+            options.UseSqlServer(Configuration.GetConnectionString("ConnStr"),
+            sqlOptions => sqlOptions.UseNetTopologySuite()));
 
+            services.AddSingleton<GeometryFactory>(NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
+            services.AddScoped<IFileStorageService, InAppStorageService>();
+           // services.AddScoped<IFileStorageService, AzureStorageService>();
+            services.AddHttpContextAccessor();
             services.AddCors(options =>
             {
                 var frontendURL = Configuration.GetValue<string>("frontend_url");
                 options.AddDefaultPolicy(builder =>
                 {
-                    builder.WithOrigins(frontendURL).AllowAnyMethod().AllowAnyHeader();
+                    builder.WithOrigins(frontendURL).AllowAnyMethod().AllowAnyHeader()
+                    .WithExposedHeaders(new string[] { "totalAmountOfRecords" });
                 });
             });
+
+            services.AddAutoMapper(typeof(AutoMapperProfiles));
+
+            services.AddSingleton(provider => new MapperConfiguration(config =>
+            {
+                var geometryFactory = provider.GetRequiredService<GeometryFactory>();
+                config.AddProfile(new AutoMapperProfiles(geometryFactory));
+            }).CreateMapper());
         } 
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,10 +83,12 @@ namespace MovieBox.API
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "MovieBox.API v1"));
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "MovieBox v1"));
             }
 
             app.UseHttpsRedirection();
+
+            app.UseStaticFiles();
 
             app.UseRouting();
 
