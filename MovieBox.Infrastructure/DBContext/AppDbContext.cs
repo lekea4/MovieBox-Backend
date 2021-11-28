@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using MovieBox.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace MovieBox.Infrastructure.DBContext
 {
-    public  class AppDbContext : DbContext
+    public  class AppDbContext : IdentityDbContext
     {
         public AppDbContext([NotNullAttribute] DbContextOptions options) : base(options)
         {
